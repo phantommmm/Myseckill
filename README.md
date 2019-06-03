@@ -34,7 +34,7 @@
 
 ## 开发技术点
 
-###JSR380自定义参数验证
+### JSR380自定义参数验证
 自定义参数 "@isPhone" 验证账号是否为合法手机号:
 * 编写一个注解: [@isphone.java](https://github.com/phantommmm/mySeckill/blob/master/src/main/java/com/phantom/seckill/validator/isPhone.java)
 * 注解所需要的校验器: [isPhoneValidator.java](https://github.com/phantommmm/mySeckill/blob/master/src/main/java/com/phantom/seckill/validator/isPhoneValidator.java)
