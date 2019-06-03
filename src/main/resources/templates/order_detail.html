@@ -1,0 +1,113 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>订单详情</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <!-- jquery -->
+    <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+    <!-- bootstrap -->
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap.min.css"/>
+    <script type="text/javascript" src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <!-- jquery-validator -->
+    <script type="text/javascript" src="/static/jquery-validation/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="/static/jquery-validation/localization/messages_zh.min.js"></script>
+    <!-- layer -->
+    <script type="text/javascript" src="/static/layer/layer.js"></script>
+    <!-- md5.js -->
+    <script type="text/javascript" src="/static/js/md5.min.js"></script>
+    <!-- common.js -->
+    <script type="text/javascript" src="/static/js/common.js"></script>
+    <style type="text/css">
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            background: url('/static/img/bg2.jpg') no-repeat;
+            background-size: 100% 100%;
+        }
+
+        #goodslist td {
+            border-top: 1px solid #39503f61;
+        }
+    </style>
+</head>
+<body>
+
+<div class="panel panel-default" style="height:100%;background-color:rgba(222,222,222,0.8)">
+    <div class="panel-heading">秒杀订单详情</div>
+    <table class="table" id="orderlist">
+        <tr><td>商品名称</td><td>商品图片</td><td>订单价格</td><td>下单时间</td>
+            <td>订单状态</td><td>收货人</td><td>收货地址</td><td></td></tr>
+        <tr  th:each="order : ${orderList}">
+            <td th:text="${order.goodsName}"></td>
+            <<td ><img th:src="@{${order.goodsImg}}" width="100" height="100" /></td>
+            <td th:text="${order.goodsPrice}"></td>
+            <!--<td th:text="${order.createDate}"></td>-->
+            <td th:text="${#dates.format(order.createDate,'yyyy-MM-dd HH:mm:ss')}"></td>
+            <div th:switch="${order.status}">
+                <td th:case="'0'" th:text="未支付"></td>
+                <td th:case="'1'" th:text="已支付"></td>
+                <td th:case="'2'" th:text="已发货"></td>
+                <td th:case="*" th:text="服务器出错"></td>
+            </div>
+            <td th:text="${user.nickname}"></td>
+            <td th:text="广州市海珠区"></td>
+            <td>
+                <button class="btn btn-primary btn-block" type="submit" id="payButton">立即支付</button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>
+<script>
+
+
+    /*
+    function render(detail) {
+        var goodsImg = detail.goodsImg;
+        var order = detail;
+        $("#goodsName").text(order.goodsName);
+        $("#goodsImg").attr("src", goodsImg);
+        $("#orderPrice").text(order.goodsPrice);
+        $("#createDate").text(new Date(order.createDate).format("yyyy-MM-dd hh:mm:ss"));
+        var status = "";
+        if (order.status === 0) {
+            status = "未支付"
+        } else if (order.status === 1) {
+            status = "待发货";
+        }
+        $("#orderStatus").text(status);
+
+    }
+
+    $(function () {
+        getOrderDetail();
+    })
+
+    function getOrderDetail() {
+        var orderId = g_getQueryString("orderId");
+        $.ajax({
+            url: "/order/detail",
+            type: "GET",
+            data: {
+                orderId: orderId
+            },
+            success: function (data) {
+                if (data.code === 0) {
+                    render(data.data);
+                } else {
+                    layer.msg(data.msg);
+                }
+            },
+            error: function () {
+                layer.msg("客户端请求有误");
+            }
+        });
+    }
+
+*/
+</script>

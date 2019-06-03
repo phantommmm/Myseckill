@@ -1,0 +1,332 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>商品详情</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <!-- jquery -->
+    <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+    <!-- bootstrap -->
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap.min.css"/>
+    <script type="text/javascript" src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <!-- jquery-validator -->
+    <script type="text/javascript" src="/static/jquery-validation/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="/static/jquery-validation/localization/messages_zh.min.js"></script>
+    <!-- layer -->
+    <script type="text/javascript" src="/static/layer/layer.js"></script>
+    <!-- md5.js -->
+    <script type="text/javascript" src="/static/js/md5.min.js"></script>
+    <!-- common.js -->
+    <script type="text/javascript" src="/static/js/common.js"></script>
+    <style type="text/css">
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            background: url('/static/img/bg2.jpg') no-repeat;
+            background-size: 100% 100%;
+        }
+
+        #goodslist td {
+            border-top: 1px solid #39503f61;
+        }
+    </style>
+</head>
+<body>
+
+<div class="panel panel-default" style="height:100%;background-color:rgba(222,222,222,0.8)">
+    <div class="panel-heading">秒杀商品详情</div>
+    <div class="panel-body">
+        <span id="userTip" onclick="noLogin()"><br/></span>
+    </div>
+    <table class="table" id="goodslist">
+        <tr>
+            <td>商品名称</td>
+            <td colspan="3" id="goodsName"></td>
+        </tr>
+        <tr>
+            <td>商品图片</td>
+            <td colspan="3"><img id="goodsImg" width="200" height="200"/></td>
+        </tr>
+        <tr>
+            <td>秒杀开始时间</td>
+            <td id="startTime"></td>
+            <td>
+                <input type="hidden" id="remainSeconds"/>
+                <span id="miusaTip"></span>
+            </td>
+            <td></td>
+            <td>
+
+
+                <div id="trycodediv" > <!-- 后面添加参数起到清除缓存作用 -->
+                    <h3 style="color: #204d74">请先通过验证:</h3>
+                    <img alt="访问频繁,请稍后尝试" id="try"  onclick="sendCode()" src="?" />
+                    <!--<img alt="访问频繁,请稍后尝试" id="try"  onclick="Img()" />-->
+                    <!--// src="/code/defaultKaptcha" />-->
+
+                <form >
+                    <input type="text" name="tryCode" id="tryCode"/>
+                    <input type="hidden"  id="kaptchaButton" value="提交" class="btn btn-success" onclick="kaptcha()"/>
+                </form>
+                </div>
+
+                    <h3>             </h3>
+
+                <div class="row">
+                    <div class="form-inline">
+                        <button class="btn btn-primary" type="button" id="buyButton"  onclick="kaptcha()">立即秒杀
+                        </button>
+                    </div>
+                </div>
+                <input type="hidden" name="goodsId" id="goodsId"/>
+            </td>
+        </tr>
+        <tr>
+            <td>商品原价</td>
+            <td colspan="3" id="goodsPrice"></td>
+            <td>
+                <div class="row">
+                    <div class="form-inline">
+                        <button class="btn btn-primary" type="button" id="orderButton"  onclick="getMiusaResult1()">我的订单
+                        </button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>秒杀价</td>
+            <td colspan="3" id="miusaPrice"></td>
+        </tr>
+        <tr>
+            <td>库存数量</td>
+            <td colspan="3" id="stockCount"></td>
+        </tr>
+    </table>
+</div>
+</body>
+<script>
+    function sendCode(){
+        var goodsId = g_getQueryString("goodsId");
+        //更新验证码图片
+        document.getElementById('try').src="/code/defaultKaptcha/"+goodsId+"?d="+new Date()*1;
+    }
+
+
+    function kaptcha() {
+
+        var remainSeconds = $("#remainSeconds").val();
+        var tryCode = $("#tryCode").val();
+        var goodsId=$("#goodsId").val();
+        if(remainSeconds==0){ //秒杀进行中
+        $.ajax({
+            url: "/code/imgvrifyControllerDefaultKaptcha",
+            tyep: "GET",
+            data: {
+                tryCode: tryCode,
+                goodsId:goodsId
+            },
+            success:function (data) {
+                    if(data==false){
+                        //验证失败
+                        layer.msg("验证码错误！");
+                        $("#try").click();//刷新验证码
+                    }else if(data==true){
+                        //验证通过
+                        layer.msg("验证通过！");
+                        $("#trycodediv").hide();
+                        getMiusaPath();
+                    }
+            },
+            error:function(){
+                layer.msg("客户端请求有误");
+            }
+        })
+        }
+    }
+
+
+    function getMiusaPath() {
+        var goodsId = $("#goodsId").val();
+        g_showLoading();
+           //验证通过才能进行秒杀
+        $.ajax({
+            url: "/seckill/path",
+            type: "GET",
+            data: {
+                goodsId: goodsId,
+                verifyCode: $("#verifyCode").val()
+            },
+            success: function (data) {
+                //data.code==0 表示请求成功成功
+                if (data.code == 0) {
+                    var path = data.data;
+                    doMiusa(path);
+                } else {
+                    $("#buyButton").attr("disabled",true);
+                    layer.msg(data.message);
+                }
+            },
+            error: function () {
+                layer.msg("客户端请求有误");
+            }
+        });
+
+    }
+
+    function getMiusaResult(goodsId) {
+        g_showLoading();
+        $.ajax({
+            url: "/seckill/result",
+            type: "GET",
+            data: {
+                goodsId: $("#goodsId").val(),
+            },
+            success: function (data) {
+                if (data.code == 0) {
+                    var result = data.data;
+                    if (result < 0) {
+                        $("#buyButton").attr("disabled",true);
+                        layer.msg("对不起，秒杀失败");
+                    } else if (result == 0) {//继续轮询
+                        setTimeout(function () {
+                            getMiusaResult(goodsId);
+                        }, 200);
+                    } else {
+                        layer.confirm("恭喜你，秒杀成功！查看订单？", {btn: ["确定", "取消"]},
+                            function () {
+                                window.location.href = "/order/detail";
+                            },
+                            function () {
+                                $("#buyButton").attr("disabled", true);
+                                layer.closeAll();
+                            });
+                    }
+                } else {
+                    $("#buyButton").attr("disabled", true);
+                    layer.msg(data.message);
+                }
+            },
+            error: function () {
+                layer.msg("客户端请求有误");
+            }
+        });
+    }
+
+    function getMiusaResult1() {
+        g_showLoading();
+        layer.msg("跳转中---")
+        window.location.href="/order/detail";
+    }
+
+    function noLogin() {
+        layer.msg("您还没有登录，请登陆后再操作！")
+        window.location.href="login";
+    }
+
+    function doMiusa(path) {//path//" + path + "/
+        $.ajax({
+            url: "/seckill/" + path + "/executeSeckill",
+            type: "POST",
+            data: {
+                goodsId: $("#goodsId").val()
+            },
+            success: function (data) {
+                if (data.code == 0) {
+                    getMiusaResult($("#goodsId").val());
+                } else {
+                    $("#buyButton").attr("disabled",true);
+                    layer.msg(data.message);
+
+                }
+            },
+            error: function () {
+                layer.msg("客户端请求有误");
+            }
+        });
+
+    }
+
+    function render(detail) {
+        var remainSeconds = detail.remainSeconds;
+        var goods = detail.goods;
+        var user = detail.user;
+        if (user) {
+            $("#userTip").hide();
+        }
+        $("#goodsName").text(goods.goodsName);
+        $("#goodsImg").attr("src", goods.goodsImg);
+        $("#startTime").text(new Date(goods.startDate).format("yyyy-MM-dd hh:mm:ss"));
+        $("#remainSeconds").val(remainSeconds);
+        $("#goodsId").val(goods.id);
+        $("#goodsPrice").text(goods.goodsPrice);
+        $("#miusaPrice").text(goods.miusaPrice);
+        $("#stockCount").text(goods.stockCount);
+        countDown();
+    }
+
+    //直接调用getDetail()
+    $(function () {
+        //countDown();
+        getDetail();
+    });
+
+    //访问GoodsController
+    function getDetail() {
+        var goodsId = g_getQueryString("goodsId");
+        $.ajax({
+            url: "/goods/detail/" + goodsId,
+            type: "GET",
+            success: function (data) {
+                if (data.code == 0) {
+                    render(data.data);
+                } else {
+                    layer.msg(data.message);
+                }
+            },
+            error: function () {
+                layer.msg("客户端请求有误");
+            }
+        });
+    }
+
+    function countDown() {
+        var remainSeconds = $("#remainSeconds").val();
+        var goodsId=$("#goodsId").val();
+        var timeout;
+
+        if (remainSeconds > 0) {//秒杀还没开始，倒计时
+            $("#trycodediv").hide();
+            $("#buyButton").attr("disabled", true);
+            $("#miusaTip").html("秒杀倒计时：" + remainSeconds + "秒");
+            timeout = setTimeout(function () {
+                $("#countDown").text(remainSeconds - 1);
+                $("#remainSeconds").val(remainSeconds - 1);
+                countDown();
+            }, 1000);
+        } else if (remainSeconds == 0) {//秒杀进行中
+            //秒杀进行中 菜会生成验证码
+            document.getElementById('try').src ="/code/defaultKaptcha/"+goodsId;
+            $("#buyButton").attr("disabled", false);
+            if (timeout) {
+                clearTimeout(timeout);
+            }
+            $("#miusaTip").html("秒杀进行中");
+
+        } else {//秒杀已经结束
+            $("#trycodediv").hide();
+            $("#buyButton").attr("disabled", true);
+            $("#miusaTip").html("秒杀已经结束");
+
+
+        }
+    }
+
+
+    function Img() {
+        $("#try").attr("src","/code/defaultKaptcha?goodsId="+$("#goodsId").val()+"&timestamp="+new Date().getTime());
+    }
+</script>
+</html>
