@@ -104,3 +104,10 @@
 [秒杀系统优化方案](https://www.cnblogs.com/xiangkejin/p/9351501.html)
 
 [慕课](https://coding.imooc.com/class/168.html)
+
+### 页面展示
+![页面展示](https://github.com/phantommmm/Myseckill/blob/master/img/show1.png)
+
+![页面展示](https://github.com/phantommmm/Myseckill/blob/master/img/show2.png)
+
+![页面展示](https://github.com/phantommmm/Myseckill/blob/master/img/show3.png)
